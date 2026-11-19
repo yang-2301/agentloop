@@ -38,6 +38,12 @@ function prettyArgs(raw: string): string {
 }
 
 onMounted(async () => {
+  // Demo hook: /?task=<text> auto-runs the agent (used for screenshots & docs)
+  const preset = new URLSearchParams(window.location.search).get('task')
+  if (preset) {
+    task.value = preset
+    run()
+  }
   try {
     const [t, h] = await Promise.all([fetchTools(), fetchHealth()])
     tools.value = t

@@ -2,6 +2,8 @@
 
 ![Architecture](docs/architecture.svg)
 
+![The agent running a two-tool task: knowledge_search finds the pricing doc, calculator computes 49 × 10 × 12 = 5880](docs/ui-demo.png)
+
 **A minimal ReAct agent runtime, built from scratch** — tool registry, reason-act-observe loop, bounded conversation memory, full execution tracing. No LangChain, no framework: ~700 lines of Python that make the mechanics of LLM agents explicit.
 
 ## Why no framework
