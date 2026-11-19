@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 560" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#57606a"/>
+    </marker>
+  </defs>
+  <rect width="980" height="560" fill="#ffffff"/>
+
+  <text x="40" y="42" font-size="20" font-weight="700" fill="#1f2328">agentloop — ReAct agent runtime</text>
+  <text x="40" y="64" font-size="13" fill="#57606a">No framework: the loop, the registry, the memory and the trace are all explicit and testable</text>
+
+  <!-- Band 1: request path -->
+  <rect x="40" y="92" width="120" height="56" rx="9" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="100" y="118" font-size="13" text-anchor="middle" fill="#1f2328" font-weight="600">User</text>
+  <text x="100" y="136" font-size="11" text-anchor="middle" fill="#57606a">task text</text>
+
+  <rect x="220" y="92" width="190" height="56" rx="9" fill="#ddf4ff" stroke="#54aeff"/>
+  <text x="315" y="118" font-size="13" text-anchor="middle" fill="#0969da" font-weight="600">Vue 3 UI  :5175</text>
+  <text x="315" y="136" font-size="11" text-anchor="middle" fill="#57606a">thought · action · observation</text>
+
+  <rect x="470" y="92" width="180" height="56" rx="9" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="560" y="118" font-size="13" text-anchor="middle" fill="#1f2328" font-weight="600">FastAPI  :8124</text>
+  <text x="560" y="136" font-size="11" text-anchor="middle" fill="#57606a">/api/run · /api/runs · /api/tools</text>
+
+  <rect x="710" y="92" width="230" height="56" rx="9" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="825" y="118" font-size="13" text-anchor="middle" fill="#1f2328" font-weight="600">RunResult trace</text>
+  <text x="825" y="136" font-size="11" text-anchor="middle" fill="#57606a">steps[] · tools · status · ms</text>
+
+  <line x1="162" y1="120" x2="216" y2="120" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+  <line x1="412" y1="120" x2="466" y2="120" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+  <line x1="652" y1="120" x2="706" y2="120" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- Band 2: the loop -->
+  <rect x="40" y="186" width="900" height="196" rx="12" fill="#fbfcfd" stroke="#d0d7de" stroke-dasharray="5 4"/>
+  <text x="60" y="212" font-size="12" fill="#57606a" font-weight="700" letter-spacing="1">REACT LOOP — agent/core.py</text>
+
+  <rect x="66" y="232" width="196" height="64" rx="9" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="164" y="258" font-size="13" text-anchor="middle" fill="#1f2328" font-weight="600">Bounded memory</text>
+  <text x="164" y="276" font-size="11" text-anchor="middle" fill="#57606a">system + task pinned, pairs trimmed</text>
+
+  <rect x="300" y="232" width="240" height="130" rx="9" fill="#fff8e5" stroke="#d4a72c"/>
+  <text x="420" y="258" font-size="13" text-anchor="middle" fill="#7d4e00" font-weight="700">Reason → Act → Observe</text>
+  <text x="420" y="280" font-size="11.5" text-anchor="middle" fill="#57606a">1 · send messages + tool schemas</text>
+  <text x="420" y="298" font-size="11.5" text-anchor="middle" fill="#57606a">2 · execute returned tool calls</text>
+  <text x="420" y="316" font-size="11.5" text-anchor="middle" fill="#57606a">3 · append observations, repeat</text>
+  <text x="420" y="340" font-size="11" text-anchor="middle" fill="#9a6700">guards: max steps · error → observation</text>
+
+  <rect x="580" y="232" width="160" height="64" rx="9" fill="#fbefff" stroke="#c297ff"/>
+  <text x="660" y="258" font-size="13" text-anchor="middle" fill="#8250df" font-weight="600">LLM client</text>
+  <text x="660" y="276" font-size="11" text-anchor="middle" fill="#57606a">chat(messages, tools)</text>
+
+  <rect x="778" y="232" width="146" height="64" rx="9" fill="#dafbe1" stroke="#4ac26b"/>
+  <text x="851" y="258" font-size="13" text-anchor="middle" fill="#1a7f37" font-weight="600">Tool registry</text>
+  <text x="851" y="276" font-size="11" text-anchor="middle" fill="#57606a">JSON Schema</text>
+
+  <line x1="264" y1="264" x2="296" y2="264" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+  <line x1="542" y1="264" x2="576" y2="264" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+  <line x1="742" y1="264" x2="774" y2="264" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- Band 3: adapters + tools -->
+  <rect x="66" y="408" width="300" height="88" rx="9" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="80" y="430" font-size="12" font-weight="700" fill="#1f2328">LLM adapters</text>
+  <text x="80" y="452" font-size="11.5" fill="#57606a">OpenAIChatClient — any compatible endpoint (urllib, no SDK)</text>
+  <text x="80" y="472" font-size="11.5" fill="#57606a">MockLLMClient — deterministic scripted planner, offline demo</text>
+
+  <rect x="396" y="408" width="544" height="88" rx="9" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="410" y="430" font-size="12" font-weight="700" fill="#1f2328">Built-in tools</text>
+  <text x="410" y="452" font-size="11.5" fill="#57606a">calculator (whitelisted arithmetic) · knowledge_search (BM25-lite FAQ)</text>
+  <text x="410" y="472" font-size="11.5" fill="#57606a">http_get (size-capped fetch) · now (UTC) — add one with Tool(...) + register()</text>
+
+  <line x1="660" y1="300" x2="660" y2="404" stroke="#c297ff" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#a)"/>
+  <line x1="851" y1="300" x2="851" y2="404" stroke="#4ac26b" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#a)"/>
+
+  <text x="40" y="534" font-size="11" fill="#8b949e">37 offline tests · every step recorded · swap mock → live model with one env var</text>
+</svg>

@@ -1,5 +1,7 @@
 # agentloop
 
+![Architecture](docs/architecture.svg)
+
 **A minimal ReAct agent runtime, built from scratch** — tool registry, reason-act-observe loop, bounded conversation memory, full execution tracing. No LangChain, no framework: ~700 lines of Python that make the mechanics of LLM agents explicit.
 
 ## Why no framework
