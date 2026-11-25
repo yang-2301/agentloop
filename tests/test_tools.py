@@ -98,3 +98,27 @@ class TestKnowledgeSearch:
 class TestNow:
     def test_returns_string(self):
         assert "UTC" in now_tool.run("{}")
+
+
+class TestHttpGetSSRFGuard:
+    """The fetch tool must refuse internal targets (offline checks only)."""
+
+    def test_blocks_localhost(self):
+        from tools.builtin import http_get_tool
+        out = http_get_tool.run('{"url": "http://localhost:8124/api/health"}')
+        assert out.startswith("ERROR:")
+        assert "internal address" in out
+
+    def test_blocks_private_ip(self):
+        from tools.builtin import http_get_tool
+        out = http_get_tool.run('{"url": "http://192.168.1.1/admin"}')
+        assert "internal address" in out
+
+    def test_blocks_metadata_service(self):
+        from tools.builtin import http_get_tool
+        out = http_get_tool.run('{"url": "http://169.254.169.254/latest/meta-data/"}')
+        assert "internal address" in out
+
+    def test_blocks_non_http_scheme(self):
+        from tools.builtin import http_get_tool
+        assert http_get_tool.run('{"url": "ftp://example.com/x"}').startswith("ERROR:")

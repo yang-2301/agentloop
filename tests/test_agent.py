@@ -24,6 +24,17 @@ class TestMemory:
         contents = [m.get("content") for m in mem._messages]
         assert contents == ["a4", "o4", "a5", "o5"]
 
+    def test_trim_preserves_original_task(self):
+        mem = Memory(system="s", max_messages=4)
+        mem.append({"role": "user", "content": "the original task"})
+        for i in range(4):
+            mem.append({"role": "assistant", "content": f"a{i}"})
+            mem.append({"role": "tool", "content": f"o{i}"})
+        assert len(mem._messages) == 3
+        contents = [m.get("content") for m in mem._messages]
+        # task stays first; oldest pairs dropped whole, newest pair intact
+        assert contents == ["the original task", "a3", "o3"]
+
 
 class ScriptedLLM:
     """Returns queued responses in order; asserts what it was asked."""
@@ -156,6 +167,20 @@ class TestMockLLM:
         assert result.status == "completed"
         assert result.tool_calls_total == 1
         assert result.answer and "360" in result.answer
+
+    def test_mock_error_recovery_trajectory(self):
+        agent = ReActAgent(llm=MockLLMClient(), tools=_demo_registry())
+        result = agent.run("Search our docs for the refund policy, and demo error recovery")
+
+        assert result.status == "completed"
+        assert result.tool_calls_total == 2
+        # step 1: unregistered tool -> ERROR observation, not a crash
+        err = result.steps[0].observations[0]["output"]
+        assert "unknown tool" in err and "web_search" in err
+        # step 2: the model reads the error and self-corrects
+        assert result.steps[1].tool_calls[0]["function"]["name"] == "knowledge_search"
+        assert "recover" in (result.steps[1].thought or "").lower() or "falling back" in (result.steps[1].thought or "")
+        assert result.answer
 
 
 def _demo_registry() -> ToolRegistry:

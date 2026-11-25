@@ -26,11 +26,22 @@ export interface RunResult {
   steps: Step[]
   tool_calls_total: number
   duration_ms: number
+  created_at?: number
+}
+
+export interface RunSummary {
+  run_id: string
+  task: string
+  status: 'completed' | 'max_steps' | 'error'
+  tool_calls_total: number
+  duration_ms: number
+  created_at: number
 }
 
 export interface ToolInfo {
   name: string
   description: string
+  parameters: Record<string, unknown>
 }
 
 export async function runTask(task: string, maxSteps = 8): Promise<RunResult> {
@@ -40,6 +51,12 @@ export async function runTask(task: string, maxSteps = 8): Promise<RunResult> {
     body: JSON.stringify({ task, max_steps: maxSteps }),
   })
   if (!res.ok) throw new Error(`run failed: ${res.status}`)
+  return res.json()
+}
+
+export async function fetchRuns(): Promise<RunSummary[]> {
+  const res = await fetch('/api/runs')
+  if (!res.ok) throw new Error(`runs failed: ${res.status}`)
   return res.json()
 }
 

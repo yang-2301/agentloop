@@ -105,9 +105,28 @@ knowledge_search_tool = Tool(
 # http_get: fetch a URL (size-capped, content-type aware)
 # ---------------------------------------------------------------------------
 
+def _is_private_host(hostname: str) -> bool:
+    """Block loopback / private / link-local targets (SSRF guard)."""
+    import ipaddress
+
+    name = hostname.strip("[]").lower()
+    if name in ("localhost",) or name.endswith(".localhost") or name.endswith(".internal"):
+        return True
+    try:
+        ip = ipaddress.ip_address(name)
+        return ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_unspecified
+    except ValueError:
+        return False
+
+
 def _http_get(url: str) -> str:
     if not url.startswith(("http://", "https://")):
         return "ERROR: only http(s) URLs are supported"
+    from urllib.parse import urlparse
+
+    host = urlparse(url).hostname or ""
+    if not host or _is_private_host(host):
+        return f"ERROR: refusing to fetch internal address '{host}'"
     req = urllib.request.Request(url, headers={"User-Agent": "agentloop-demo/1.0"})
     with urllib.request.urlopen(req, timeout=10) as resp:
         ctype = resp.headers.get("Content-Type", "")

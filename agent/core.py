@@ -1,8 +1,8 @@
 """The ReAct loop.
 
 One ``run`` = reason -> act -> observe, repeated until the model emits a
-final answer or a guard (max steps / step timeout) stops it. Every step
-is recorded in a trace so the UI can replay the agent's reasoning.
+final answer or the max-steps guard stops it. Every step is recorded in a
+trace so the UI can replay the agent's reasoning.
 """
 
 from __future__ import annotations
@@ -17,7 +17,6 @@ from .memory import Memory
 from .tools import ToolRegistry
 
 DEFAULT_MAX_STEPS = 8
-STEP_TIMEOUT_S = 15.0
 
 SYSTEM_PROMPT = """You are a precise task-solving agent. You answer user tasks by
 calling the provided tools when they help, then composing a final answer from the

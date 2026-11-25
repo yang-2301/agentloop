@@ -84,10 +84,13 @@ class MockLLMClient(LLMClient):
 
     Trajectory rule:
     1. If the task references the knowledge base -> call ``knowledge_search``.
-    2. If the task also needs arithmetic -> afterwards call ``calculator``
+    2. Tasks that mention "recover" first hallucinate an unregistered tool,
+       read the ``ERROR: unknown tool`` observation, then self-correct to
+       ``knowledge_search`` — demonstrating the loop's error-recovery guard.
+    3. If the task also needs arithmetic -> afterwards call ``calculator``
        using numbers observed in the search result or the task itself.
-    3. Tasks with arithmetic only -> single ``calculator`` call.
-    4. Otherwise -> answer directly from the task text.
+    4. Tasks with arithmetic only -> single ``calculator`` call.
+    5. Otherwise -> answer directly from the task text.
     """
 
     def __init__(self) -> None:
@@ -105,8 +108,18 @@ class MockLLMClient(LLMClient):
 
         if last_obs is None:
             # Step 1: decide the first action.
-            needs_docs = any(h in task.lower() for h in _DOC_HINTS)
-            needs_calc = any(h in task.lower() for h in _CALC_HINTS)
+            t = task.lower()
+            needs_docs = any(h in t for h in _DOC_HINTS)
+            needs_calc = any(h in t for h in _CALC_HINTS)
+            if "recover" in t and needs_docs and "knowledge_search" in available:
+                # Deliberately reach for a tool that is not registered: the
+                # loop turns this into an ERROR observation, and step 2
+                # recovers — exactly how the guard rails work in production.
+                return _tool_call(
+                    "web_search",
+                    {"query": _doc_query(task)},
+                    thought="I'll try web_search to find this in our documentation.",
+                )
             if needs_docs and "knowledge_search" in available:
                 return _tool_call("knowledge_search", {"query": _doc_query(task)})
             if needs_calc and "calculator" in available:
@@ -114,6 +127,14 @@ class MockLLMClient(LLMClient):
             return _final(f"Here is the answer regarding '{task}': based on the task description, the mock agent responds directly without tool use.")
 
         # Step 2+: a tool already ran.
+        if "ERROR: unknown tool" in last_obs:
+            # Recovery path: read the error, fall back to a registered tool.
+            if any(h in task.lower() for h in _DOC_HINTS) and "knowledge_search" in available:
+                return _tool_call(
+                    "knowledge_search",
+                    {"query": _doc_query(task)},
+                    thought="web_search is not registered — falling back to knowledge_search.",
+                )
         docs_used = "knowledge_search" in called
         docs_match = any(h in task.lower() for h in _DOC_HINTS)
         calc_hint = any(h in task.lower() for h in _CALC_HINTS)
@@ -209,10 +230,10 @@ def _combine_numbers(nums: List[str], task: str) -> str:
     return nums[0] if nums else "0"
 
 
-def _tool_call(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
+def _tool_call(name: str, args: Dict[str, Any], thought: str | None = None) -> Dict[str, Any]:
     return {
         "role": "assistant",
-        "content": None,
+        "content": thought,
         "tool_calls": [{
             "id": f"call_{name}",
             "type": "function",

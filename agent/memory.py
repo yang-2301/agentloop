@@ -28,12 +28,18 @@ class Memory:
             self.append(m)
 
     def _trim(self) -> None:
-        # +1 because every ReAct turn adds an assistant message and a
-        # tool message; trim in pairs so tool results stay attached.
         overflow = len(self._messages) - self.max_messages
-        if overflow > 0:
-            drop = overflow + (overflow % 2)
-            self._messages = self._messages[drop:]
+        if overflow <= 0:
+            return
+        # The first user message is the original task: keep it visible for
+        # the whole run. Everything after it is (assistant, tool) pairs —
+        # trim whole pairs only, so observations stay attached to the
+        # assistant message whose tool_calls produced them.
+        has_task = bool(self._messages) and self._messages[0].get("role") == "user"
+        head = self._messages[:1] if has_task else []
+        body = self._messages[1:] if has_task else self._messages
+        drop = min(overflow + (overflow % 2), len(body) - (len(body) % 2))
+        self._messages = head + body[drop:]
 
     def render(self) -> List[Dict[str, Any]]:
         return [{"role": "system", "content": self.system}] + list(self._messages)

@@ -6,6 +6,15 @@
 
 **A minimal ReAct agent runtime, built from scratch** — tool registry, reason-act-observe loop, bounded conversation memory, full execution tracing. No LangChain, no framework: ~700 lines of Python that make the mechanics of LLM agents explicit.
 
+## Screenshots
+
+| | |
+|---|---|
+| ![Error recovery: an unregistered tool becomes an ERROR observation, the agent self-corrects](docs/ui-error-recovery.png) | ![Max-steps guard: the run is capped and the UI explains why there is no answer](docs/ui-guard.png) |
+| ![Run history: every run is traced, timestamped and replayable](docs/ui-history.png) | ![Tool inventory: click a tool to inspect the JSON Schema the model sees](docs/ui-tools.png) |
+
+The guard rails in action: a hallucinated `web_search` call comes back as `ERROR: unknown tool 'web_search'. Available: …` and the agent reads it and self-corrects; the max-steps guard stops a run that would otherwise spiral, and the UI says why. Every run lands in a timestamped history, and the tool inventory doubles as live JSON-Schema documentation.
+
 ## Why no framework
 
 Most agent tutorials hand you `initialize_agent(...)` and hide everything interesting. This project implements the loop itself so every moving part is visible and testable:
@@ -19,12 +28,14 @@ Most agent tutorials hand you `initialize_agent(...)` and hide everything intere
 
 ```bash
 make install          # backend venv + frontend npm packages
-make test             # 37 tests, fully offline
+make test             # 47 tests, fully offline
 make serve            # backend on :8124 — mock LLM unless OPENAI_API_KEY is set
 make dev              # UI on :5175 (proxies /api to :8124)
 ```
 
 Open http://localhost:5175, pick an example task, and watch the Thought → Action → Observation timeline.
+
+Demo URL hooks: `/?task=<text>` auto-runs the agent, `&max_steps=1` shows the max-steps guard, `&tool=calculator` pre-expands a tool's JSON Schema (used for the screenshots above).
 
 To run against a real model:
 
@@ -41,7 +52,7 @@ make serve
 |---|---|
 | `calculator` | Arithmetic evaluation behind a strict charset whitelist (no `eval` of arbitrary code) |
 | `knowledge_search` | BM25-lite search over a small product FAQ corpus |
-| `http_get` | Size-capped HTTP fetch (status, content type, body preview) |
+| `http_get` | Size-capped HTTP fetch (status, content type, body preview) — refuses loopback/private/link-local targets (SSRF guard) |
 | `now` | Current UTC time |
 
 New tools are one `Tool(name, description, parameters, fn)` + `registry.register(...)` away — the schema is what the model sees.
@@ -50,10 +61,10 @@ New tools are one `Tool(name, description, parameters, fn)` + `registry.register
 
 | Endpoint | Description |
 |---|---|
-| `POST /api/run` | Run a task `{task, max_steps}`; returns the full trace |
-| `GET /api/runs` | Recent runs (summary) |
+| `POST /api/run` | Run a task `{task, max_steps}`; the cap is honored by the loop; returns the full trace |
+| `GET /api/runs` | Recent runs, newest first, timestamped; server keeps the last 100 |
 | `GET /api/runs/{id}` | Full trace of one run: steps, thoughts, calls, observations |
-| `GET /api/tools` | Tool inventory |
+| `GET /api/tools` | Tool inventory incl. the JSON Schema each tool exposes |
 | `GET /api/health` | `llm_mode: "mock" \| "openai"` |
 
 ### Example
@@ -63,7 +74,7 @@ curl -s localhost:8124/api/run -H 'Content-Type: application/json' \
   -d '{"task": "Search our docs: how much does the team plan cost per year for 10 users?"}' | jq .
 ```
 
-The mock planner answers this with a real two-tool trajectory: `knowledge_search` (finds the pricing doc) → `calculator` (49 × 10 × 12) → final answer.
+The mock planner answers this with a real two-tool trajectory: `knowledge_search` (finds the pricing doc) → `calculator` (49 × 10 × 12) → final answer. It also scripts the failure path: tasks mentioning "recover" first call an unregistered tool, read the `ERROR` observation, and self-correct — the guard-rail story, offline.
 
 ## Architecture
 
@@ -82,7 +93,7 @@ agent/                    the runtime — no framework, no magic
 
 ## Testing
 
-37 offline tests cover the registry contract (bad JSON, missing args, exceptions → observations), memory trimming, the loop itself (scripted multi-step LLM, observation feedback, unknown-tool recovery, max-steps guard, provider failure), and every API endpoint via `TestClient`.
+47 offline tests cover the registry contract (bad JSON, missing args, exceptions → observations), memory trimming (original task stays visible, pairs never split), the loop itself (scripted multi-step LLM, observation feedback, unknown-tool recovery, max-steps guard, provider failure), the mock's error-recovery trajectory, the SSRF guard, and every API endpoint via `TestClient`.
 
 ```bash
 make test
