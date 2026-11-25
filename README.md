@@ -4,6 +4,8 @@
 
 ![The agent running a two-tool task: knowledge_search finds the pricing doc, calculator computes 49 × 10 × 12 = 5880](docs/ui-demo.png)
 
+**▶ [Watch the 45-second demo](docs/agentloop-demo.mp4)** — task → tool calls → error recovery → max-steps guard, narrated ([poster](docs/demo-poster.png) · [script](docs/demo-script.md))
+
 **A minimal ReAct agent runtime, built from scratch** — tool registry, reason-act-observe loop, bounded conversation memory, full execution tracing. No LangChain, no framework: ~700 lines of Python that make the mechanics of LLM agents explicit.
 
 ## Screenshots
